@@ -51,9 +51,6 @@ def flux(z, p, c, case):
 def mean_intensity(z, p, c, case):
     pass
 
-def area(z, p, case):
-    pass
-
 def overlap(bigr, r, d):
     
     k0 = np.arccos((d**2 + r**2 - bigr**2) / (2*d*r))
@@ -67,26 +64,26 @@ def find_area(z, p):
     
     if zp >= 1+pp:
         if zm >= 1+pm:
-            return 0
+            return 0, 0
         elif 1-pm < zm < z+pm:
-            # alpha_S*
             alpha = overlap(1, pm, zm)
-            return alpha
+            return 0, alpha / np.pi 
         else:
-            return np.pi * (pm ** 2)
+            return 0, pm ** 2
             
     if 1-p < zp < z+pp:
         if zm >= 1+pm:
             # alpha_P*
             alpha = overlap(1, pp, zp)
-            return alpha
+            return alpha / np.pi, 0
         elif 1-pm < zm < z+pm:
             if zpm >= pm+pp:
                 # alpha_P* + alpha_S*
                 alpha1 = overlap(1, pp, zp)
                 alpha2 = overlap(1, pm, zm)
-                return alpha1 + alpha2
+                return (alpha1, alpha2) / np.pi
             elif pp-pm < zpm < pp+pm:
+                alpha = overlap(1, pp, zp)
                 # determine sub-case for case 14
                 x12 = (1 - pp ** 2 + zp ** 2) / 2 / (zp ** 2)
                 y12 = np.sqrt(2 * zp ** 2 * (1 + pp ** 2) - (1 - pp ** 2) ** 2 - zp ** 4) / 2 / (zp ** 2)
@@ -95,9 +92,9 @@ def find_area(z, p):
                 if ((x12 - zm*cos_theta) ** 2 + (y12 - zm * sin_theta) ** 2) < pm ** 2:
                     if ((x12 - zm*cos_theta) ** 2 + (y12 + zm * sin_theta) ** 2) < pm ** 2:
                         if zp > 1:
-                            return overlap(1, pm, zm) - overlap(1, pp, zp)
+                            return (alpha, overlap(1, pm, zm) - overlap(1, pp, zp)) / np.pi
                         else:
-                            np.pi * (pp ** 2) - overlap(1, pm, zm) - overlap(1, pp, zp) - overlap(pp, pm, zm)
+                            return (alpha / np.pi, (pp ** 2) - (overlap(1, pm, zm) - overlap(1, pp, zp) - overlap(pp, pm, zm)) / np.pi
                     else:
                         x13_p = (1 - pm ** 2 + zm ** 2) / (2 * zm)
                         y13_p = - np.sqrt(2 * zm ** 2 * (1 + pm ** 2) - (1 - pm ** 2)**2 - zm ** 4) / (2 * zm)
@@ -125,7 +122,7 @@ def find_area(z, p):
                                                                      np.sqrt(4 * r ** 2 - c ** 2) * 
                                                                      c / 4 for (c, r) in 
                                                                      zip([c1, c2, c3], [1, pp, pm])])))
-                            return overlap(1, pm, zm) - c14_1a_overlap
+                            return (alpha, overlap(1, pm, zm) - c14_1a_overlap) / np.pi
                         else:
                             c14_1b_overlap = (np.sqrt((c1 + c2 + c3) * 
                                                       (c2 + c3 - c1) * 
@@ -136,7 +133,7 @@ def find_area(z, p):
                                              - c1 * np.sqrt(4 - c1 ** 2) / 4 
                                              - c2 * np.sqrt(4 * pp ** 2 - c2 ** 2) / 4
                                              - c3 * np.sqrt(4 * pm ** 2 - c3 ** 2) / 4)
-                            return overlap(1, pm, zm) - c14_1b_overlap
+                            return (alpha, overlap(1, pm, zm) - c14_1b_overlap) / np.pi
                 
                 else:
                     x13_p = (1 - pm ** 2 + zm ** 2) / (2 * zm)
@@ -145,9 +142,9 @@ def find_area(z, p):
                     y13 = x13_p * sin_theta + y13_p * cos_theta
                     if ((x13 - zp) ** 2 + y13 ** 2) < (pp ** 2):
                         if (zm - pm) < (zp - pp):
-                            return np.pi * (pm ** 2) - overlap(pp, pm, zpm)
+                            return alpha / np.pi, (pm ** 2) - overlap(pp, pm, zpm) / np.pi
                         else:
-                            return 0
+                            return 0, 0
                     else:
                         x23_pp = (pp ** 2 - pm ** 2 + zpm ** 2) / (2 * zpm)
                         y23_pp = np.sqrt(2 * zpm ** 2 * (pp ** 2 + pm ** 2) - 
@@ -157,51 +154,51 @@ def find_area(z, p):
                         x23 = x23_pp * cos_theta_pp - y23_pp * sin_theta_pp + zp
                         y23 = x23_pp * sin_theta_pp + y23_pp * cos_theta_pp
                         if (x23 ** 2 + y23 ** 2) < 1:
-                            return overlap(1, pm, zm) - overlap(pp, pm, zpm)
+                            return (alpha, overlap(1, pm, zm) - overlap(pp, pm, zpm)) / np.pi
                         else:
-                            return overlap(1, pm, zm)
+                            return (alpha, overlap(1, pm, zm)) / np.pi
                 
             else:
                 # alpha_P*
                 alpha = overlap(1, pp, zp)
-                return alpha
+                return alpha / np.pi, 0
         else:
             if zpm >= pm+pp:
                 # alpha_P*
-                return alpha + np.pi * (pm ** 2)
+                return alpha / np.pi,  pm ** 2
             elif pp-pm < zpm < pp+pm:
                 # alpha_P*, alpha_PS
                 alpha1 = overlap(1, pp, zp)
                 alpha2 = overlap(pp, pm, zpm)
-                return alpha1 + np.pi * (pm ** 2) - alpha2
+                return alpha1 / np.pi,  (pm ** 2) - alpha2 / np.pi
             else:
                 # alpha_P*
                 alpha = overlap(1, pp, zp)
-                return alpha
+                return alpha / np.pi, 0
             
     else:
         if zm >= 1+pm:
-            return np.pi * (pp ** 2)
+            return pp ** 2, 0
         elif 1-pm < zm < z+pm:
             if zpm >= pm+pp:
                 # alpha_S*
                 alpha = overlap(1, pm, zm)
-                return np.pi * (pp ** 2) + alpha
+                return pp ** 2,  alpha / np.pi
             else:
                 # alpha_S*, alpha_SP
                 alpha1 = overlap(1, pm, zm)
                 alpha2 = overlap(pp, pm, zpm)
-                return np.pi * (pp ** 2) + alpha1 - alpha2
+                return pp ** 2,  (alpha1 - alpha2) / np.pi
 
         else:
             if zpm >= pm+pp:
-                return np.pi * ((pp ** 2) + (pm ** 2))
+                return pp ** 2, pm ** 2
             elif pp-pm < zpm < pp+pm:
                 # alpha_SP
                 alpha = overlap(pp, pm, zpm)
-                return np.pi * (pp ** 2) + np.pi * (pm ** 2) - alpha
+                return pp ** 2, pm ** 2 - alpha / np.pi
             else:
-                return np.pi * (pp ** 2)   
+                return pp ** 2, 0 
 
 def lc_no_overlap(zp, pp, zm, pm, c):
     
