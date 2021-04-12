@@ -48,8 +48,9 @@ class system:
         
         starplanet_distance = np.sqrt((stx - plx)**2 + (sty + ply)**2)
         starmoon_distance = np.sqrt((stx - mox)**2 + (sty + moy)**2)
+        planetmoon = np.sqrt((plx - mox)**2 + (ply - moy)**2)
         
-        return (starplanet_distance, starmoon_distance)
+        return (starplanet_distance, starmoon_distance, planetmoon_distance)
     
     def starplanet_distance(self, t):
         
@@ -66,11 +67,7 @@ class system:
         sr = self.star.radius * ac.R_earth.value / ac.au.value
         t_trans = self.starplanet.t0
         d = self.planetmoon.a + mr + sr
-        
-        #if self.starplanet.e < 0.01:
-        #    f = np.arcsin(np.sqrt(1 - (d/a)**2)) - self.starplanet.w
-            
-            
+   
         g = lambda t: np.abs(self.starplanet_distance(t) - d)
         res = minimize(g, x0=self.starplanet.t0, method='Nelder-Mead').x[0]
         return (t_trans - np.abs(res - t_trans), t_trans + np.abs(res - t_trans))
@@ -80,10 +77,7 @@ class system:
         t_trans = self.starplanet.t0
         contact_duration = np.diff(self.find_contacts())
         is_transiting = np.isclose(t % self.starplanet.P - t_trans, np.zeros_like(t), atol = contact_duration)
-        
-        #is_transiting = np.isclose(t - t_trans, 
-        #                           self.starplanet.P * np.round((t - t_trans)
-        #                                                        / self.starplanet.P), atol=window)
+
         return is_transiting
         
         
