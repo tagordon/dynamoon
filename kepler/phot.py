@@ -111,8 +111,31 @@ def find_area(z, p):
                         x23 = x23_pp * cos_theta_pp - y23_pp * sin_theta_pp + zp
                         y23 = x23_pp * sin_theta_pp + y23_pp * cos_theta_pp
                         if (zp * sin_theta) > (y13 + (zm * cos_theta - x13) * (y23 - y13) / (x23 - x13)):
+                            c1 = (x12 - x13) ** 2 + (y12 - y13) ** 2
+                            c2 = (x12 - x23) ** 2 + (y12 - y23) ** 2
+                            c3 = (x13 - x23) ** 2 + (y13 - y23) ** 2
+                            R1 = 1
+                            R2 = pp
+                            R3 = pm
+                            c14_1a_overlap = (np.sqrt((c1 + c2 + c3) * 
+                                                      (c2 + c3 - c1) * 
+                                                      (c1 + c3 - c2) * 
+                                                      (c1 + c2 - c3)) 
+                                              / 4 + np.sum(np.array([r * np.arcsin(c / 2 / r) - 
+                                                                     np.sqrt(4 * r ** 2 - c ** 2) * 
+                                                                     c / 4 for (c, r) in 
+                                                                     zip([c1, c2, c3], [1, pp, pm])])))
                             return overlap(1, pm, zm) - c14_1a_overlap
                         else:
+                            c14_1b_overlap = (np.sqrt((c1 + c2 + c3) * 
+                                                      (c2 + c3 - c1) * 
+                                                      (c1 + c3 - c2) * 
+                                                      (c1 + c2 - c3)) 
+                                              / 4 + np.sum(np.array([r * np.arcsin(c / 2 / r) for (c, r) in 
+                                                                     zip([c1, c2, c3], [1, pp, pm])]))
+                                             - c1 * np.sqrt(4 - c1 ** 2) / 4 
+                                             - c2 * np.sqrt(4 * pp ** 2 - c2 ** 2) / 4
+                                             - c3 * np.sqrt(4 * pm ** 2 - c3 ** 2) / 4)
                             return overlap(1, pm, zm) - c14_1b_overlap
                 
                 else:
