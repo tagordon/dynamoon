@@ -48,7 +48,7 @@ class system:
         
         starplanet_distance = np.sqrt((stx - plx)**2 + (sty + ply)**2)
         starmoon_distance = np.sqrt((stx - mox)**2 + (sty + moy)**2)
-        planetmoon = np.sqrt((plx - mox)**2 + (ply - moy)**2)
+        planetmoon_distance = np.sqrt((plx - mox)**2 + (ply - moy)**2)
         
         return (starplanet_distance, starmoon_distance, planetmoon_distance)
     

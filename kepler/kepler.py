@@ -34,8 +34,8 @@ class keplerian_system:
     def relative_coords(self, t):
                         
         if self.e == 0:
-            f = self.M(t)
-            r = self.r(t)
+            f = (t % self.P) * 2 * np.pi / self.P
+            r = self.a
         else:
             f, r = self.solve_kepler(t)            
 
@@ -57,7 +57,7 @@ class keplerian_system:
     def find_transit(self):
         
         if self.e == 0:
-            E = np.pi/2
+            return (np.pi / 2 - self.w) / (2 * np.pi) * self.P
         else:
             arg = (1 - (1 - self.e**2) / (1 + self.e*np.cos(np.pi/2 - self.w)))/self.e
             if arg > 1:
@@ -74,9 +74,13 @@ class keplerian_system:
         return f, r
     
     def f(self, t):
-        return 2*np.arctan(np.sqrt((1 + self.e) / (1 - self.e)) * np.tan( self.E(t) / 2))
+        if self.e == 0:
+            return ((t - self.t0)/self.P) % self.P * 2 * np.pi
+        return 2*np.arctan(np.sqrt((1 + self.e) / (1 - self.e)) * np.tan(self.E(t) / 2))
     
     def r(self, t):
+        if self.e == 0:
+            return self.a
         return self.a * (1 - self.e * np.cos(self.E(t)))
     
     def E(self, t, method='newton'):
