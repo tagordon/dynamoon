@@ -4,6 +4,9 @@ from scipy.optimize import minimize
 from astropy import constants as ac
 from .phot import *
 from copy import deepcopy
+import ctypes
+
+photlib = ctypes.CDLL("./c_src/phot.so")
 
 __all__ = ['system']
 
@@ -80,9 +83,49 @@ class system:
         
         t_trans = self.starplanet.t0
         contact_duration = np.diff(self.find_contacts())
-        is_transiting = np.isclose(t % self.starplanet.P - t_trans, np.zeros_like(t), atol = contact_duration)
+        is_transiting = (np.isclose(t % self.starplanet.P - t_trans, np.zeros_like(t), atol = contact_duration)
+                         | np.isclose(t % self.starplanet.P - t_trans, np.ones_like(t)*self.starplanet.P, atol = contact_duration))
 
         return is_transiting
         
-    def flux(self, t):
+    def flux_dep(self, t):
         return lc(self, t, self.star.u)
+    
+    def flux(self, t, ld='quad'):
+        
+        ld_coeffs = self.star.u
+        if ld == 'quad':
+            l1, l2 = ld_coeffs
+            c = np.array([0, l1 + 2*l2, 0, -l2])
+            I_func = I_nonlinear
+        elif ld == 'nonlinear':
+            c = ld_coeffs
+            I_func = I_nonlinear
+        else:
+            raise AttributeError('ld must be one of quad or nonlinear')
+                                    
+        pp = self.planet.radius / self.star.radius
+        pm = self.moon.radius / self.star.radius
+        strad_au = self.star.radius * ac.R_earth.value / ac.au.value
+                                    
+        mask = self.reduce_t(t, factor=100)
+        rt = t[mask]
+        zp, zm, zpm = self.sky_projected_distance(rt) / strad_au
+        
+        rf = (ctypes.c_double * len(rt))(*np.zeros(len(rt)))
+        c1, c2, c3, c4 = c
+        photlib.flux(rf, 
+                     (ctypes.c_double * len(zp))(*zp), 
+                     (ctypes.c_double * len(zm))(*zm), 
+                     (ctypes.c_double * len(zpm))(*zpm), 
+                     ctypes.c_double(pp), 
+                     ctypes.c_double(pm), 
+                     ctypes.c_double(c1), 
+                     ctypes.c_double(c2), 
+                     ctypes.c_double(c3), 
+                     ctypes.c_double(c4), 
+                     ctypes.c_int(len(rf)))
+        
+        f = np.zeros_like(t)
+        f[mask] = np.array(rf)
+        return f

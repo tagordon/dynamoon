@@ -4,7 +4,7 @@ from scipy.optimize import root_scalar
 from scipy.optimize import minimize
 import ctypes
 
-libc = ctypes.CDLL("./c_src/kepler.so")
+keplib = ctypes.CDLL("./c_src/kepler.so")
 
 __all__ = ['keplerian_system']
 
@@ -72,7 +72,7 @@ class keplerian_system:
         
         r = (ctypes.c_double * len(t))(*np.zeros(len(t)))
         f = (ctypes.c_double * len(t))(*np.zeros(len(t)))
-        libc.solve_kepler_array(r, f,
+        keplib.solve_kepler_array(r, f,
                                 (ctypes.c_double * len(t))(*t),
                                 ctypes.c_double(self.n),
                                 ctypes.c_double(self.t0),
