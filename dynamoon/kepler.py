@@ -33,7 +33,7 @@ class keplerian_system:
         
         self.hasparams = True
         
-    def relative_coords(self, t):
+    def relative_coords_dep(self, t):
                         
         if self.e == 0:
             f = (t % self.P) * 2 * np.pi / self.P
@@ -41,22 +41,44 @@ class keplerian_system:
         else:
             f, r = self.solve_kepler(t)            
 
-        x = -r * np.cos(self.w + f)
-        y = -r * np.sin(self.w + f)*np.cos(self.i)
+        x = -r * (np.cos(self.Omega)*np.cos(self.w + f) - np.sin(self.Omega)*np.sin(self.w + f)*np.cos(self.i))
+        y = -r * (np.cos(self.Omega)*np.sin(self.w + f)*np.cos(self.i) + np.sin(self.Omega)*np.cos(self.w + f))
         z = r * np.sin(self.w + f)*np.sin(self.i)
         
         return np.array([x, y, z])
     
-    def barycentric_coords(self, t):
+    def barycentric_coords_dep(self, t):
         if not self.hasparams:
             raise AttributeError("must set orbital parameters prior to computing coordinates")
             
         coords = self.relative_coords(t)
         mr_primary = self.secondary.mass / (self.primary.mass + self.secondary.mass)
         mr_secondary = self.primary.mass / (self.primary.mass + self.secondary.mass)
-        return np.array([-mr_primary * coords, mr_secondary * coords])  
+        return np.array([-mr_primary * coords, mr_secondary * coords]) 
+    
+    def barycentric_coords_dep(self, t):
         
-    def find_transit(self):
+        if not self.hasparams:
+            raise AttributeError("must set orbital parameters prior to computing coordinates")
+        
+        if self.e == 0:
+            f = (t % self.P) * 2 * np.pi / self.P
+            r = self.a
+        else:
+            f, r = self.solve_kepler(t)            
+
+        x = -r * (np.cos(self.Omega)*np.cos(self.w + f) - np.sin(self.Omega)*np.sin(self.w + f)*np.cos(self.i))
+        y = -r * (np.cos(self.Omega)*np.sin(self.w + f)*np.cos(self.i) + np.sin(self.Omega)*np.cos(self.w + f))
+        z = r * np.sin(self.w + f)*np.sin(self.i)
+        
+        coords = np.array([x, y, z])
+        
+        mr_primary = self.secondary.mass / (self.primary.mass + self.secondary.mass)
+        mr_secondary = self.primary.mass / (self.primary.mass + self.secondary.mass)
+        
+        return np.array([-mr_primary * coords, mr_secondary * coords]) 
+                
+    def find_transit_dep(self):
         
         if self.e == 0:
             return (np.pi / 2 - self.w) / (2 * np.pi) * self.P
@@ -80,17 +102,6 @@ class keplerian_system:
                                 ctypes.c_double(self.a),
                                 ctypes.c_int(len(t)))  
         return np.array(f), np.array(r)
-        
-        #M = self.M(t)
-        #if self.e == 0:
-        #    f = 2*np.arctan(np.sqrt((1 + self.e) / (1 - self.e)) * np.tan(M / 2))
-        #    r = self.a * (1 - self.e * np.cos(M))
-        #    return f, r
-        #else:
-        #    E = self.E(t)
-        #    f = 2*np.arctan(np.sqrt((1 + self.e) / (1 - self.e)) * np.tan( E / 2))
-        #    r = self.a * (1 - self.e * np.cos(E))
-        #    return f, r
     
     def f(self, t):
         if self.e == 0:
