@@ -21,9 +21,9 @@ void solve_kepler(double * res, double t, double n, double t0, double e, double 
         res[1] = r;
     }
     
-    tol = 1e-7;
+    tol = 1e-9;
     E = M;
-    err = e * sin(M);
+    err = 1;
     while (err > tol){
         err = -(E - e * sin(E) - M) / (1 - e * cos(E));
         E += err;
@@ -44,6 +44,7 @@ double find_transit(double e, double w, double P, double t0, double n){
     
     if (e < 1e-5){
         return P * (PI / 2. - w) / (2 * PI);
+        //E = PI / 2. - w;
     }
     else{
         arg = (1 - (1 - pow(e, 2)) / (1 + e * cos(PI / 2. - w))) / e;
@@ -51,17 +52,19 @@ double find_transit(double e, double w, double P, double t0, double n){
             arg = 1;
         }
         E = acos(arg);
+        //E = 2 * atan(sqrt((1 - e) / (1 + e)) * tan((PI / 2. - w) / 2.));
     }
     M = E - e * sin(E);
     return M / n + t0;
 }
 
-void find_xy(double * xy, double t, double n, double t0, double e, double a, double mprim, double msec, double w, double omega, double i){
+void find_xyz(double * xyz, double t, double n, double t0, double e, double a, double mprim, double msec, double w, double omega, double i){
     
     double mrprim;
     double mrsec;
     double x;
     double y;
+    double z;
     double f;
     double r;
     
@@ -74,11 +77,31 @@ void find_xy(double * xy, double t, double n, double t0, double e, double a, dou
     mrsec = mprim / (mprim + msec);
     
     x = -r * (cos(omega) * cos(w + f) - sin(omega) * sin(w + f) * cos(i));
-    y = -r * (cos(omega) * sin(w + f) * cos(i) + sin(omega) * cos(w + f));
-    xy[0] = -mrprim * x;
-    xy[1] = -mrprim * y;
-    xy[2] = mrsec * x;
-    xy[3] = mrsec * y;
+    y = -r * (sin(omega) * cos(w + f) + cos(omega) * sin(w + f) * cos(i));
+    z = r * sin(w + f) * sin(i);
+    
+    xyz[0] = -mrprim * x;
+    xyz[1] = -mrprim * y;
+    xyz[2] = -mrprim * z;
+    xyz[3] = mrsec * x;
+    xyz[4] = mrsec * y;
+    xyz[5] = mrsec * z;
+}
+
+void find_xyz_array(double * xp, double * yp, double * zp, double * xs, double * ys, double * zs, double t, double n, double t0, double e, double a, double mprim, double msec, double w, double omega, double i, int m){
+    
+    int j;
+    double xyz[6];
+    
+    for (j=0; j<m; j++){
+        find_xyz(xyz, t, n, t0, e, a, mprim, msec, w, omega, i);
+        xp[j] = xyz[0];
+        yp[j] = xyz[1];
+        zp[j] = xyz[2];
+        xs[j] = xyz[3];
+        ys[j] = xyz[4];
+        zs[j] = xyz[5];
+    }
 }
 
 int solve_kepler_array(double * r ,double * f, double * t, double n, double t0, double e, double a, int m){

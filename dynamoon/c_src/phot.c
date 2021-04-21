@@ -318,17 +318,15 @@ double find_dt(double w, double ep, double em, double rad, double ap, double am,
 }
 
 void flux(double * flux, double * t, double pp, double pm, double c1, double c2, double c3, double c4, double t0p, double t0m, double P, double np, double ep, double ap, double mp, double ms, double mm, double wp, double omegap, double ip, double nm, double em, double am, double wm, double omegam, double im, double strad_au, int m){
-    
-    FILE *fp;
-    fp = fopen("./debug_phot.txt", "a");
+
     int j;
     double a[2];
     double arp;
     double arm;
     double Ip;
     double Im;
-    double xy_ps[4];
-    double xy_mp[4];
+    double xyz_ps[6];
+    double xyz_mp[6];
     double xp;
     double yp;
     double xm;
@@ -356,14 +354,14 @@ void flux(double * flux, double * t, double pp, double pm, double c1, double c2,
         tj = t[j] + tt - t0p;
         if ((fabs(fmod(tj, P) - tt) < dt) | (fabs(fmod(tj, P) - tt) > (P - dt))){
             
-            find_xy(xy_ps, tj, np, t0p, ep, ap, ms, mp, wp, omegap, ip);
-            find_xy(xy_mp, tj, nm, t0m, em, am, mp, mm, wm, omegam, im);
-            xs = xy_ps[0];
-            ys = xy_ps[1];
-            xp = xy_ps[2] + xy_mp[0];
-            yp = xy_ps[3] + xy_mp[1];
-            xm = xy_ps[2] + xy_mp[2];
-            ym = xy_ps[3] + xy_mp[3];
+            find_xyz(xyz_ps, tj, np, t0p, ep, ap, ms, mp, wp, omegap, ip);
+            find_xyz(xyz_mp, tj, nm, t0m, em, am, mp, mm, wm, omegam, im);
+            xs = xyz_ps[0];
+            ys = xyz_ps[1];
+            xp = xyz_ps[3] + xyz_mp[0];
+            yp = xyz_ps[4] + xyz_mp[1];
+            xm = xyz_ps[3] + xyz_mp[3];
+            ym = xyz_ps[4] + xyz_mp[4];
             
             zp = sqrt(pow(xp - xs, 2) + pow(yp - ys, 2)) / strad_au;
             zm = sqrt(pow(xm - xs, 2) + pow(ym - ys, 2)) / strad_au;
@@ -380,5 +378,4 @@ void flux(double * flux, double * t, double pp, double pm, double c1, double c2,
             flux[j] = 0;
         }
     }
-    fclose(fp);
 }
