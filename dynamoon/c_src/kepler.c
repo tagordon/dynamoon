@@ -4,6 +4,7 @@
 
 #define PI 3.14159265358979323846
 
+// Kepler solver using Newton's method
 void solve_kepler(double * res, double t, double n, double t0, double e, double a){
     
     double M;
@@ -15,27 +16,31 @@ void solve_kepler(double * res, double t, double n, double t0, double e, double 
     
     M = n * (t - t0);
     if (e <= 1e-5){
-        f = 2 * atan(sqrt((1 + e) / (1 - e)) * tan(M / 2.));
-        r = a * (1 - e * cos(M));
+        f = M;
+        r = a;
         res[0] = f;
         res[1] = r;
     }
     
-    tol = 1e-9;
-    E = M;
-    err = 1;
-    while (err > tol){
-        err = -(E - e * sin(E) - M) / (1 - e * cos(E));
-        E += err;
+    else{
+    
+        tol = 1e-9;
+        E = M;
+        err = 1;
+        while (err > tol){
+            err = -(E - e * sin(E) - M) / (1 - e * cos(E));
+            E += err;
+        }
+    
+        f = 2 * atan(sqrt((1 + e) / (1 - e)) * tan(E / 2.));
+        r = a * (1 - e * cos(E));
+    
+        res[0] = f;
+        res[1] = r;
     }
-    
-    f = 2 * atan(sqrt((1 + e) / (1 - e)) * tan(E / 2.));
-    r = a * (1 - e * cos(E));
-    
-    res[0] = f;
-    res[1] = r;
 }
 
+// find the transit time 
 double find_transit(double e, double w, double P, double t0, double n){
     
     double arg;
@@ -43,21 +48,24 @@ double find_transit(double e, double w, double P, double t0, double n){
     double M;
     
     if (e < 1e-5){
-        return P * (PI / 2. - w) / (2 * PI);
-        //E = PI / 2. - w;
+        return P * (PI / 2. - w) / (2 * PI) + t0;
     }
     else{
         arg = (1 - (1 - pow(e, 2)) / (1 + e * cos(PI / 2. - w))) / e;
+        
+        // for some reason the argument ocassionally exceeds 1 (at least in the python implementation)
+        // so this makes sure it doesn't. Should probably figure out what the actual issue is at some 
+        // point but this seems fine for now.
         if (arg > 1){
             arg = 1;
         }
         E = acos(arg);
-        //E = 2 * atan(sqrt((1 - e) / (1 + e)) * tan((PI / 2. - w) / 2.));
     }
     M = E - e * sin(E);
     return M / n + t0;
 }
 
+// find the coordinates of the primary and secondary bodies at time t
 void find_xyz(double * xyz, double t, double n, double t0, double e, double a, double mprim, double msec, double w, double omega, double i){
     
     double mrprim;
@@ -88,7 +96,9 @@ void find_xyz(double * xyz, double t, double n, double t0, double e, double a, d
     xyz[5] = mrsec * z;
 }
 
-void find_xyz_array(double * xp, double * yp, double * zp, double * xs, double * ys, double * zs, double t, double n, double t0, double e, double a, double mprim, double msec, double w, double omega, double i, int m){
+// wrapping the above function to populate arrays of coordinates. I don't think I finished this, and I don't think 
+// it's used. Remove if you can. 
+void find_xyz_array_dep(double * xp, double * yp, double * zp, double * xs, double * ys, double * zs, double t, double n, double t0, double e, double a, double mprim, double msec, double w, double omega, double i, int m){
     
     int j;
     double xyz[6];
@@ -104,6 +114,7 @@ void find_xyz_array(double * xp, double * yp, double * zp, double * xs, double *
     }
 }
 
+// Wraps kepler solver to populate r and f arrays in time 
 int solve_kepler_array(double * r ,double * f, double * t, double n, double t0, double e, double a, int m){
     
     int i;

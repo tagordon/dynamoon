@@ -1,4 +1,5 @@
 from .kepler import keplerian_system
+from .body import star, rock
 import numpy as np
 from scipy.optimize import minimize
 from astropy import constants as ac
@@ -19,6 +20,36 @@ class system:
     earths_in_sun = 332946.08
     G = 39.478 # au ^ 3 / (yr ^2 * M_sun)
     G = G / (days_in_year ** 2) / earths_in_sun
+    
+    @classmethod
+    def from_fitting_params(cls, taub, rp, Tb, bb, mm, rm, bm, Pm, emcosw, emsinw, omegam, u1, u2):
+        
+        st = star(1, 1, [u1, u2])
+        pl = rock(1, rp)
+        mo = rock(mm, rm)
+        sys = cls(st, pl, mo)
+        
+        eb = 0.0
+        wb = 0.0
+        ab = 215
+        ib = np.arccos(bb / ab)
+        P = Tb * np.pi / np.arcsin(np.sqrt(1 - bb**2) / (ab * np.sin(ib)))
+        
+        t0m = 0.0
+        em = np.sqrt(emcosw**2 + emsinw**2)
+        if em < 1e-12:
+            wm = 0.0
+        else:
+            wm = np.arcsin(emsinw / em)
+        am = Pm / (1 - em**2)
+            
+        ib *= 180 / np.pi
+        im = np.arccos(bm / am * (1 + emsinw) / (1 - em**2)) * 180 / np.pi 
+        
+        sys.set_planet_orbit(t0=taub, e=eb, P=P, Omega=0, w=wb, i=ib)
+        sys.set_moon_orbit(t0=t0m, e=em, P=Pm, Omega=omegam, w=wm, i=im)
+        
+        return sys
     
     def __init__(self, star, planet, moon):
         self.star = deepcopy(star)
@@ -44,7 +75,7 @@ class system:
                                  ctypes.c_double(self.starplanet.P), 
                                  ctypes.c_double(self.starplanet.t0), 
                                  ctypes.c_double(self.starplanet.n))
-        
+                        
         tp = t + tt - self.starplanet.t0
         
         xyz_sp = (ctypes.c_double * 6)(*np.zeros(6))
@@ -137,12 +168,15 @@ class system:
     
     def animate(self, t, stkwargs={'color':'k', 'fill':False}, 
                     plkwargs={'color':'k', 'fill':False}, 
-                    mokwargs={'color':'k', 'fill':False}):
+                    mokwargs={'color':'k', 'fill':False}, 
+                xlims=(-1.2, 1.2), ylims=(-1.2, 1.2), duration=5):
+        
+        interval = int(duration * 1000 / len(t))
         
         fig = plt.figure(figsize=(10, 10))
         ax = plt.gca()
-        plt.xlim(-1.2, 1.2)
-        plt.ylim(-1.2, 1.2)
+        plt.xlim(xlims)
+        plt.ylim(ylims)
 
         st_patch = ax.add_patch(plt.Circle((0, 0), 0, **stkwargs))
         pl_patch = ax.add_patch(plt.Circle((0, 0), 0, **plkwargs))
@@ -177,7 +211,7 @@ class system:
     
 
         return animation.FuncAnimation(fig, update, frames=t,
-                    init_func=init, blit=True, interval=20)
+                    init_func=init, blit=True, interval=interval)
     
     def draw_config(self, ax, t, stkwargs={'color':'k', 'fill':False}, 
                     plkwargs={'color':'k', 'fill':False}, 
