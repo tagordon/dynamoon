@@ -22,7 +22,7 @@ class system:
     G = G / (days_in_year ** 2) / earths_in_sun
     
     @classmethod
-    def from_fitting_params(cls, taub, rp, Tb, bb, mm, rm, bm, Pm, emcosw, emsinw, omegam, u1, u2):
+    def from_fitting_params(cls, taub, rp, Pb, bb, mm, rm, bm, Pm, emcosw, emsinw, omegam, u1, u2):
         
         st = star(1, 1, [u1, u2])
         pl = rock(1, rp)
@@ -31,9 +31,11 @@ class system:
         
         eb = 0.0
         wb = 0.0
-        ab = 215
+        ab = ac.au.value / ac.R_sun.value
         ib = np.arccos(bb / ab)
-        P = Tb * np.pi / np.arcsin(np.sqrt(1 - bb**2) / (ab * np.sin(ib)))
+        #q = 1
+        #P = Tb * np.pi / (q**2 * np.arcsin(np.sqrt(1 - q**2 * ab**2 * np.cos(ib)**2) / (q * ab * np.sin(ib))))
+        #print(P)
         
         t0m = 0.0
         em = np.sqrt(emcosw**2 + emsinw**2)
@@ -46,7 +48,7 @@ class system:
         ib *= 180 / np.pi
         im = np.arccos(bm / am * (1 + emsinw) / (1 - em**2)) * 180 / np.pi 
         
-        sys.set_planet_orbit(t0=taub, e=eb, P=P, Omega=0, w=wb, i=ib)
+        sys.set_planet_orbit(t0=taub, e=eb, P=Pb, Omega=0, w=wb, i=ib)
         sys.set_moon_orbit(t0=t0m, e=em, P=Pm, Omega=omegam, w=wm, i=im)
         
         return sys

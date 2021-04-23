@@ -350,8 +350,8 @@ double find_dt(double w, double ep, double em, double rad, double ap, double am,
 // compute the light curve
 void flux(double * flux, double * t, double pp, double pm, double c1, double c2, double c3, double c4, double t0p, double t0m, double P, double np, double ep, double ap, double mp, double ms, double mm, double wp, double omegap, double ip, double nm, double em, double am, double wm, double omegam, double im, double strad_au, int m){
 
-    FILE *fp;
-    fp = fopen("./times.txt", "a");
+    //FILE *fp;
+    //fp = fopen("./times.txt", "a");
     
     int j;
     double a[2];
@@ -388,7 +388,7 @@ void flux(double * flux, double * t, double pp, double pm, double c1, double c2,
         tj = t[j] + tt - t0p;
         if (((fabs(fmod(tj, P) - tt) < dt) | (fabs(fmod(tj, P) - tt) > (P - dt)))){
             
-            fprintf(fp, "%f\n", t[j]);
+            //fprintf(fp, "%f\n", t[j]);
             
             find_xyz(xyz_ps, tj, np, t0p, ep, ap, ms, mp + mm, wp, omegap, ip);
             find_xyz(xyz_mp, tj, nm, t0m, em, am, mp, mm, wm, omegam, im);
@@ -414,7 +414,7 @@ void flux(double * flux, double * t, double pp, double pm, double c1, double c2,
             flux[j] = 0;
         }
     }
-    fclose(fp);
+    //fclose(fp);
 
 
 }
