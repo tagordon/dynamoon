@@ -421,12 +421,13 @@ double find_dt(double w, double ep, double em, double rad, double ap, double am,
 }
 
 // compute the light curve
-void flux(double * flux, double * t, double pp, double pm, double c1, double c2, double c3, double c4, double t0p, double t0m, double P, double np, double ep, double ap, double mp, double ms, double mm, double wp, double omegap, double ip, double nm, double em, double am, double wm, double omegam, double im, double strad_au, int m){
+void flux(double *flux, double * t, double pp, double pm, double c1, double c2, double c3, double c4, double t0p, double t0m, double P, double np, double ep, double ap, double mp, double ms, double mm, double wp, double omegap, double ip, double nm, double em, double am, double wm, double omegam, double im, double strad_au, int m){
 
     //FILE *fp;
     //fp = fopen("./times.txt", "a");
     
     int j;
+    int k;
     double a[2];
     double Ip[7] = {};
     double Im[7] = {};
@@ -481,13 +482,32 @@ void flux(double * flux, double * t, double pp, double pm, double c1, double c2,
             arm = *(a+1);
             intensity(Ip, zp, pp, c1, c2, c3, c4);
             intensity(Im, zm, pm, c1, c2, c3, c4);
-            flux[j] = - (arp * Ip[0] + arm * Im[0]) / (4. * Sigma * PI);
-        }
-        else{
-            flux[j] = 0;
+            for (k=0; k<7; k++){
+                flux[j*7 + k] = - (arp * Ip[k] + arm * Im[k]) / (4. * Sigma * PI);
+                //fprintf(fp, "%f ", flux[j][k]);
+                //flux[j][k] = j*k;
+            }
+            //fprintf(fp, "\n");
         }
     }
     //fclose(fp);
+}
 
+void fillarray1d(double * array, int m){
+    int j;
+    
+    for (j=0; j<m; j++){
+        array[j] = 2.0*j;
+    }
+}
 
+void fillarray2d(double *array, int m, int n){
+    int j;
+    int k;
+    
+    for (j=0; j<m; j++){
+        for (k=0; k<n; k++){
+            array[j*n + k] = 2.0*j*k;
+        }
+    }
 }
